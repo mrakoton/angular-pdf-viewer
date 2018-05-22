@@ -24,6 +24,7 @@ angular.module('pdf')
     var scale = $attrs.scale ? $attrs.scale : 1;
     var canvas = $element.find('canvas')[0];
     var ctx = canvas.getContext('2d');
+    var renderTask = null;
 
     var renderPage = function(num) {
       if (!angular.isNumber(num)) {
@@ -45,7 +46,16 @@ angular.module('pdf')
             viewport: viewport
           };
 
-          page.render(renderContext);
+          if (renderTask) {
+              renderTask.cancel();
+          }
+
+          renderTask = page.render(renderContext);
+          renderTask.then(function () {
+              renderTask = null;
+          }, function(e) {
+              console.info(e);
+          });
         });
     };
 
@@ -139,7 +149,7 @@ angular.module('pdf')
         docInitParams.httpHeaders = headers;
       }
 
-      return PDFJS
+      return pdfjsLib
         .getDocument(docInitParams)
         .then(function (_pdfDoc) {
 
